@@ -22,21 +22,25 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	//Get the door owning actor
+	Owner = GetOwner();
+	//Set the player's pawn as the actor that can trigger the pressure plate
 	ActorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
 }
 
 /* Open the door */
 void UOpenDoor::OpenDoor()
 {
-	//Find the owning actor
-	AActor* Owner = GetOwner();
-
 	//Create a rotator. It is an object that stores rotation information in degrees.
-	FRotator NewRotation = FRotator(0.0f, 30.0f, 0.0f);
-
+	FRotator NewRotation = FRotator(0.0f, OpenAngle, 0.0f);
 	Owner->SetActorRotation(NewRotation);
 }
 
+/* Close the door */
+void UOpenDoor::CloseDoor()
+{
+	Owner->SetActorRotation(FRotator(0.0f, CloseAngle, 0.0f));
+}
 
 // Called every frame
 void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -46,7 +50,14 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	//Poll the trigger volume
 	//If the ActorThatOpens is in the volume
 	if (PressurePlate->IsOverlappingActor(ActorThatOpens))
+	{
 		OpenDoor();
-
+		LastDoorOpenTime = GetWorld()->GetTimeSeconds();
+	}
+	
+	if (GetWorld()->GetTimeSeconds() - LastDoorOpenTime > DoorCloseDelay)
+	{
+		CloseDoor();
+	}
 }
 
